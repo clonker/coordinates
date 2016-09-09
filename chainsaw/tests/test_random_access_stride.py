@@ -28,10 +28,8 @@ import pkg_resources
 from six.moves import range
 
 import chainsaw.api as coor
-from chainsaw.data import DataInMemory, FeatureReader
+from chainsaw.data import DataInMemory
 from chainsaw.data.fragmented_trajectory_reader import FragmentedTrajectoryReader
-from chainsaw.tests.util import create_traj, get_top
-from chainsaw.util.files import TemporaryDirectory
 
 
 def _test_ra_with_format(format, stride):
@@ -62,6 +60,7 @@ def _test_ra_with_format(format, stride):
             except EnvironmentError:
                 pass
 
+
 class TestRandomAccessStride(TestCase):
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp('test_random_access')
@@ -74,11 +73,6 @@ class TestRandomAccessStride(TestCase):
             [2, 1], [2, 1]
         ])
         self.stride2 = np.asarray([[2, 0]])
-        self.topfile = pkg_resources.resource_filename(__name__, 'data/test.pdb')
-        trajfile1, xyz1, n_frames1 = create_traj(self.topfile, dir=self.tmpdir, format=".binpos", length=100)
-        trajfile2, xyz2, n_frames2 = create_traj(self.topfile, dir=self.tmpdir, format=".binpos", length=20)
-        trajfile3, xyz3, n_frames3 = create_traj(self.topfile, dir=self.tmpdir, format=".binpos", length=20)
-        self.data_feature_reader = [trajfile1, trajfile2, trajfile3]
 
     def tearDown(self):
         import shutil
@@ -87,8 +81,6 @@ class TestRandomAccessStride(TestCase):
     def _get_reader_instance(self, instance_number):
         if instance_number == 0:
             return DataInMemory(self.data)
-        elif instance_number == 1:
-            return FeatureReader(self.data_feature_reader, topologyfile=self.topfile)
 
     def test_is_random_accessible(self):
         dim = DataInMemory(self.data)
@@ -113,8 +105,7 @@ class TestRandomAccessStride(TestCase):
 
     def test_transfomer_random_access(self):
         for in_memory in [True, False]:
-            for r in range(0, 2):
-                dim = self._get_reader_instance(r)
+                dim = self._get_reader_instance(0)
 
                 tica = coor.tica(dim, dim=3)
                 tica.in_memory = in_memory
@@ -134,7 +125,7 @@ class TestRandomAccessStride(TestCase):
                     np.testing.assert_array_equal(cube[i], out[i][0, 0])
 
     def test_transformer_random_access_in_memory(self):
-        feature_reader = self._get_reader_instance(1)
+        feature_reader = self._get_reader_instance(0)
         tica = coor.tica(feature_reader)
         # everything normal
         assert tica.is_random_accessible
@@ -159,7 +150,7 @@ class TestRandomAccessStride(TestCase):
         assert tica._ra_jagged is None
 
     def test_linear_random_access_with_mixed_trajs(self):
-        for r in range(0, 2):
+        for r in (0, ):
             dim = self._get_reader_instance(r)
             Y = dim.get_output()
 
@@ -171,7 +162,7 @@ class TestRandomAccessStride(TestCase):
             np.testing.assert_equal(X[4, :], Y[0][0, :])
 
     def test_cuboid_random_access_with_mixed_trajs(self):
-        for r in range(0, 2):
+        for r in (0, ):
             dim = self._get_reader_instance(r)
             output = dim.get_output()
 
@@ -185,7 +176,7 @@ class TestRandomAccessStride(TestCase):
             np.testing.assert_equal(X[2], output[0][frames])
 
     def test_linear_itraj_random_access_with_mixed_trajs(self):
-        for r in range(0, 2):
+        for r in (0, ):
             dim = self._get_reader_instance(r)
             Y = dim.get_output()
 
@@ -198,7 +189,7 @@ class TestRandomAccessStride(TestCase):
             np.testing.assert_equal(X[2], Y[0][2, :])
 
     def test_jagged_random_access_with_mixed_trajs(self):
-        for r in range(0, 2):
+        for r in (0, ):
             dim = self._get_reader_instance(r)
             Y = dim.get_output()
 
@@ -366,95 +357,6 @@ class TestRandomAccessStride(TestCase):
                 assert ref_stride[key] == expected, \
                     "Expected to get exactly %s elements of trajectory %s, but got %s for chunksize=%s" \
                     % (expected, key, ref_stride[key], cs)
-
-    def test_feature_reader_random_access_xtc(self):
-        _test_ra_with_format('.xtc', self.stride)
-
-    def test_feature_reader_random_access_dcd(self):
-        _test_ra_with_format('.dcd', self.stride)
-
-    def test_feature_reader_random_access_trr(self):
-        _test_ra_with_format('.trr', self.stride)
-
-    def test_feature_reader_random_access_hdf5(self):
-        _test_ra_with_format('.h5', self.stride)
-
-    def test_feature_reader_random_access_xyz(self):
-        _test_ra_with_format('.xyz', self.stride)
-
-    @unittest.skip("gro has no len()")
-    def test_feature_reader_random_access_gro(self):
-        _test_ra_with_format('.gro', self.stride)
-
-    def test_feature_reader_random_access_netcdf(self):
-        _test_ra_with_format('.nc', self.stride)
-
-    @unittest.skip("lammpstrj has no len()")
-    def test_feature_reader_random_access_lampstr(self):
-        _test_ra_with_format('.lammpstrj', self.stride)
-
-    def test_fragmented_reader_random_access(self):
-        with TemporaryDirectory() as td:
-            trajfiles = []
-            for i in range(3):
-                trajfiles.append(create_traj(start=i * 10, dir=td, length=20)[0])
-            topfile = get_top()
-
-            trajfiles = [trajfiles[0], (trajfiles[0], trajfiles[1]), trajfiles[2]]
-
-            source = coor.source(trajfiles, top=topfile)
-            assert isinstance(source, FragmentedTrajectoryReader)
-
-            for chunksize in [0, 2, 3, 100000]:
-                out = source.get_output(stride=self.stride, chunk=chunksize)
-                keys = np.unique(self.stride[:, 0])
-                for i, coords in enumerate(out):
-                    if i in keys:
-                        traj = mdtraj.load(trajfiles[i], top=topfile)
-                        np.testing.assert_equal(coords,
-                                                traj.xyz[
-                                                    np.array(self.stride[self.stride[:, 0] == i][:, 1])
-                                                ].reshape(-1, 3 * 3))
-
-    def test_fragmented_reader_random_access1(self):
-        with TemporaryDirectory() as td:
-            trajfiles = []
-            for i in range(3):
-                trajfiles.append(create_traj(start=i * 10, dir=td, length=20)[0])
-            topfile = get_top()
-            trajfiles = [(trajfiles[0], trajfiles[1]), trajfiles[0],  trajfiles[2]]
-
-            source = coor.source(trajfiles, top=topfile)
-            assert isinstance(source, FragmentedTrajectoryReader)
-
-            for r in source._readers:
-                if not isinstance(r, (list, tuple)):
-                    r = r[0]
-                for _r in r:
-                    _r._return_traj_obj = True
-
-            from collections import defaultdict
-            for chunksize in [0, 2, 3, 100000]:
-                frames = defaultdict(list)
-                with source.iterator(chunk=chunksize, return_trajindex=True, stride=self.stride) as it:
-                    for itraj, t in it:
-                        frames[itraj].append(t)
-
-                dest = []
-                for itraj in frames.keys():
-                    dest.append(frames[itraj][0])
-
-                    for t in frames[itraj][1:]:
-                        dest[-1] = dest[-1].join(t)
-
-                keys = np.unique(self.stride[:, 0])
-                for i, coords in enumerate(dest):
-                    if i in keys:
-                        traj = mdtraj.load(trajfiles[i], top=topfile)
-                        np.testing.assert_equal(coords.xyz,
-                                                traj.xyz[
-                                                    np.array(self.stride[self.stride[:, 0] == i][:, 1])
-                                                ], err_msg="not equal for chunksize=%s" % chunksize)
 
 if __name__ == '__main__':
     unittest.main()

@@ -20,7 +20,6 @@ import itertools
 import numpy as np
 
 from chainsaw.data._base.datasource import DataSource, DataSourceIterator
-from chainsaw.data.util.reader_utils import preallocate_empty_trajectory
 from chainsaw.util.annotators import fix_docs
 
 
@@ -60,6 +59,7 @@ class _FragmentedTrajectoryIterator(object):
     def _allocate_chunk(self, expected_length, ndim):
         if (hasattr(self._reader_it._data_source, '_return_traj_obj') and
                 self._reader_it._data_source._return_traj_obj):
+            from pyemma.coordinates.data.util.reader_utils import preallocate_empty_trajectory
             X = preallocate_empty_trajectory(n_frames=expected_length,
                                              top=self._reader_it._data_source.featurizer.topology)
         else:

@@ -23,7 +23,6 @@ import unittest
 import os
 import tempfile
 
-from chainsaw.data import MDFeaturizer
 from logging import getLogger
 import chainsaw.api as api
 import numpy as np
@@ -34,7 +33,14 @@ import shutil
 
 logger = getLogger('chainsaw.'+'TestReaderUtils')
 
+try:
+    import pyemma
+    have_feature_reader = True
+except ImportError:
+    have_feature_reader = False
 
+
+@unittest.skipIf(not have_feature_reader, "dont have featurereader")
 class TestApiSourceFileReader(unittest.TestCase):
 
     @classmethod
@@ -114,6 +120,7 @@ class TestApiSourceFileReader(unittest.TestCase):
         self.assertIn("could not parse", exc.exception.args[0])
 
 import pkg_resources
+@unittest.skipIf(not have_feature_reader, "dont have featurereader")
 class TestApiSourceFeatureReader(unittest.TestCase):
 
     def setUp(self):
@@ -139,6 +146,7 @@ class TestApiSourceFeatureReader(unittest.TestCase):
                                                                         "topology file should coincide.")
 
     def test_read_multiple_files_featurizer(self):
+        from pyemma.coordinates.data import MDFeaturizer
         featurizer = MDFeaturizer(self.pdb_file)
         reader = api.source(self.traj_files, features=featurizer)
         self.assertIsNotNone(reader, "The reader should not be none.")
@@ -160,6 +168,7 @@ class TestApiSourceFeatureReader(unittest.TestCase):
                                                                         "topology file should coincide.")
 
     def test_read_single_file_featurizer(self):
+        from pyemma.coordinates.data import MDFeaturizer
         featurizer = MDFeaturizer(self.pdb_file)
         reader = api.source(self.traj_files[0], features=featurizer)
         self.assertIsNotNone(reader, "The reader should not be none.")
@@ -171,6 +180,7 @@ class TestApiSourceFeatureReader(unittest.TestCase):
                                                                         "topology file should coincide.")
 
     def test_invalid_input(self):
+        from pyemma.coordinates.data import MDFeaturizer
         # neither featurizer nor topology file given
         self.assertRaises(ValueError, api.source, self.traj_files, None, None)
         # no input files but a topology file
