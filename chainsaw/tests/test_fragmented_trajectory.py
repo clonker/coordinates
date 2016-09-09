@@ -14,12 +14,9 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import os
 import unittest
 
-import pkg_resources
 import numpy as np
-import chainsaw as coor
 from chainsaw.data.fragmented_trajectory_reader import FragmentedTrajectoryReader
 from six.moves import range
 
@@ -77,36 +74,6 @@ class TestFragmentedTrajectory(unittest.TestCase):
 
                 np.testing.assert_array_almost_equal(data[::stride][0:len(Y)], X)
                 np.testing.assert_array_almost_equal(data[lag::stride], Y)
-
-    @unittest.skipIf(not have_pyemma, "dont have pyemma")
-    def test_fragmented_xtc(self):
-        import mdtraj
-        from chainsaw.tests.util import create_traj
-        from pyemma.datasets import get_bpti_test_data
-        d = get_bpti_test_data()
-        top_file = d['top']
-        trajfiles = []
-        for _ in range(3):
-            f, _, _ = create_traj(top_file)
-            trajfiles.append(f)
-        try:
-            # three trajectories: one consisting of all three, one consisting of the first,
-            # one consisting of the first and the last
-            source = coor.source([trajfiles, [trajfiles[0]], [trajfiles[0], trajfiles[2]]], top=top_file)
-            source.chunksize = 1000
-
-            out = source.get_output(stride=1)
-            trajs = [mdtraj.load(trajfiles[i], top=top_file).xyz.reshape(-1,9) for i in range(0,3)]
-
-            np.testing.assert_equal(out[0], np.vstack(trajs))
-            np.testing.assert_equal(out[1], trajs[0])
-            np.testing.assert_equal(out[2], np.vstack((trajs[0], trajs[2])))
-        finally:
-            for t in trajfiles:
-                try:
-                    os.unlink(t)
-                except EnvironmentError:
-                    pass
 
     def test_multiple_input_trajectories_random_access(self):
         indices = np.asarray([
