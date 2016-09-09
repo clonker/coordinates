@@ -22,7 +22,6 @@ import tempfile
 import unittest
 from unittest import TestCase
 
-import mdtraj
 import numpy as np
 import pkg_resources
 from six.moves import range
@@ -30,35 +29,6 @@ from six.moves import range
 import chainsaw.api as coor
 from chainsaw.data import DataInMemory
 from chainsaw.data.fragmented_trajectory_reader import FragmentedTrajectoryReader
-
-
-def _test_ra_with_format(format, stride):
-    from chainsaw.tests.util import create_traj
-
-    topfile = pkg_resources.resource_filename(__name__, 'data/test.pdb')
-    trajfiles = []
-    for _ in range(3):
-        f, _, _ = create_traj(topfile, format=format)
-        trajfiles.append(f)
-    try:
-        source = coor.source(trajfiles, top=topfile)
-        source.chunksize = 2
-
-        out = source.get_output(stride=stride)
-        keys = np.unique(stride[:, 0])
-        for i, coords in enumerate(out):
-            if i in keys:
-                traj = mdtraj.load(trajfiles[i], top=topfile)
-                np.testing.assert_equal(coords,
-                                        traj.xyz[
-                                            np.array(stride[stride[:, 0] == i][:, 1])
-                                        ].reshape(-1, 9))
-    finally:
-        for t in trajfiles:
-            try:
-                os.unlink(t)
-            except EnvironmentError:
-                pass
 
 
 class TestRandomAccessStride(TestCase):

@@ -1,8 +1,3 @@
-import tempfile
-import numpy as np
-import mdtraj
-import pkg_resources
-import os
 import logging
 
 

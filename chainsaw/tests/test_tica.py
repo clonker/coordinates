@@ -319,7 +319,7 @@ class TestTICAExtensive(unittest.TestCase):
         assert len(self.tica_obj.trajectory_lengths()) == 1
         assert self.tica_obj.trajectory_lengths()[0] == self.tica_obj.trajectory_length(0)
 
-    @unittest.skipIf(not have_pyemma)
+    @unittest.skipIf(not have_pyemma, "dont have pyemma")
     def test_feature_correlation_MD(self):
         # Copying from the test_MD_data
         #path = pkg_resources.resource_filename(__name__, 'data') + os.path.sep
