@@ -18,11 +18,16 @@ import os
 import unittest
 
 import pkg_resources
-import mdtraj
 import numpy as np
 import chainsaw as coor
 from chainsaw.data.fragmented_trajectory_reader import FragmentedTrajectoryReader
 from six.moves import range
+
+try:
+    import pyemma
+    have_pyemma = True
+except ImportError:
+    have_pyemma = False
 
 
 class TestFragmentedTrajectory(unittest.TestCase):
@@ -73,10 +78,13 @@ class TestFragmentedTrajectory(unittest.TestCase):
                 np.testing.assert_array_almost_equal(data[::stride][0:len(Y)], X)
                 np.testing.assert_array_almost_equal(data[lag::stride], Y)
 
+    @unittest.skipIf(not have_pyemma, "dont have pyemma")
     def test_fragmented_xtc(self):
+        import mdtraj
         from chainsaw.tests.util import create_traj
-
-        top_file = pkg_resources.resource_filename(__name__, 'data/test.pdb')
+        from pyemma.datasets import get_bpti_test_data
+        d = get_bpti_test_data()
+        top_file = d['top']
         trajfiles = []
         for _ in range(3):
             f, _, _ = create_traj(top_file)

@@ -70,7 +70,7 @@ class TestTICAProjection(unittest.TestCase):
                 data = correlated + mean
                 xyz = data.reshape((N, cls.dim // 3, 3))
                 # create trajectory file
-                tempfname = tempfile.mktemp('.xtc')
+                tempfname = tempfile.mktemp('.npy')
                 np.save(tempfname, xyz)
                 cls.trajnames.append(tempfname)
 
@@ -102,7 +102,7 @@ class TestTICAProjection(unittest.TestCase):
 
     def test_partial_fit(self):
         from chainsaw import source
-        reader = source(self.trajnames, top=self.temppdb)
+        reader = source(self.trajnames)
         reader_output = reader.get_output()
 
         params = {'lag': 10, 'kinetic_map': False, 'dim': self.dim}

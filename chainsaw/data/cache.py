@@ -215,8 +215,7 @@ class Cache(DataSource):
     def input_description(self):
         descriptions = []
 
-        from chainsaw.data import FeatureReader
-        if isinstance(self._real_reader, FeatureReader):
+        if hasattr(self._real_reader, 'featurizer'):
             self.logger.debug("using describe() of FeatureReader")
             descriptions.append(self._real_reader.featurizer.describe())
         else:

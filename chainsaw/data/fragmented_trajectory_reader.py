@@ -57,6 +57,7 @@ class _FragmentedTrajectoryIterator(object):
         return self
 
     def _allocate_chunk(self, expected_length, ndim):
+        assert hasattr(self, '_reader_it')
         if (hasattr(self._reader_it._data_source, '_return_traj_obj') and
                 self._reader_it._data_source._return_traj_obj):
             from pyemma.coordinates.data.util.reader_utils import preallocate_empty_trajectory

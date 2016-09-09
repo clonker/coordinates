@@ -25,22 +25,16 @@ import unittest
 import os
 import tempfile
 import numpy as np
-import mdtraj
 import chainsaw as coor
 from six.moves import range
 from six.moves import zip
+
 
 class TestStride(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.dim = 3  # dimension (must be divisible by 3)
         N_trajs = 10  # number of trajectories
-
-        # create topology file
-        cls.temppdb = tempfile.mktemp('.pdb')
-        with open(cls.temppdb, 'w') as f:
-            for i in range(cls.dim//3):
-                print(('ATOM  %5d C    ACE A   1      28.490  31.600  33.379  0.00  1.00' % i), file=f)
 
         cls.trajnames = []  # list of xtc file names
         cls.data = []
@@ -51,16 +45,13 @@ class TestStride(unittest.TestCase):
             cls.data.append(xyz)
             t = np.arange(0, N)
             # create trajectory file
-            traj = mdtraj.load(cls.temppdb)
-            traj.xyz = xyz
-            traj.time = t
-            tempfname = tempfile.mktemp('.xtc')
-            traj.save(tempfname)
+            tempfname = tempfile.mktemp('.npy')
+            np.save(tempfname, xyz)
             cls.trajnames.append(tempfname)
 
     def test_length_and_content_feature_reader_and_TICA(self):
         for stride in range(1, 100, 23):
-            r = coor.source(self.trajnames, top=self.temppdb)
+            r = coor.source(self.trajnames)
             t = coor.tica(data=r, lag=2, dim=2, force_eigenvalues_le_one=True)
             # t.data_producer = r
             t.parametrize()
@@ -105,7 +96,7 @@ class TestStride(unittest.TestCase):
 
     def test_parametrize_with_stride(self):
         for stride in range(1, 100, 23):
-            r = coor.source(self.trajnames, top=self.temppdb)
+            r = coor.source(self.trajnames)
             tau = 5
             try:
                 t = coor.tica(r, lag=tau, stride=stride, dim=2, force_eigenvalues_le_one=True)
@@ -119,8 +110,6 @@ class TestStride(unittest.TestCase):
     def tearDownClass(cls):
         for fname in cls.trajnames:
             os.unlink(fname)
-        os.unlink(cls.temppdb)
-        super(TestStride, cls).tearDownClass()
 
 if __name__ == "__main__":
     unittest.main()
