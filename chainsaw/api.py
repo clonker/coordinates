@@ -40,14 +40,11 @@ __credits__ = ["Benjamin Trendelkamp-Schroer", "Martin Scherer", "Frank Noe", "M
 __maintainer__ = "Martin Scherer"
 __email__ = "m.scherer AT fu-berlin DOT de"
 
-__all__ = ['featurizer',  # IO
-           'load',
+__all__ = ['load',  # IO
            'source',
            'histogram',
            'pipeline',
            'discretizer',
-           'save_traj',
-           'save_trajs',
            'pca',  # transform
            'tica',
            'cluster_regspace',  # cluster
