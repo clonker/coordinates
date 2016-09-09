@@ -19,7 +19,6 @@
 from __future__ import absolute_import
 #from chainsaw.clustering.interface import AbstractClustering
 from chainsaw.transform.transformer import StreamingTransformer
-from chainsaw.data.feature_reader import FeatureReader
 
 from logging import getLogger
 from chainsaw.data._base.iterable import Iterable
@@ -249,7 +248,7 @@ class Discretizer(Pipeline):
         assert isinstance(clustering, AbstractClustering)
 
         trajfiles = None
-        if isinstance(reader, FeatureReader):
+        if isinstance(reader, DataSource):
             trajfiles = reader.filenames
 
         clustering.save_dtrajs(

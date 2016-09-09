@@ -31,7 +31,6 @@ import unittest
 import mock
 import chainsaw
 from chainsaw import api
-from chainsaw.data.feature_reader import FeatureReader
 from chainsaw.data.numpy_filereader import NumPyFileReader
 from chainsaw.data.py_csv_reader import PyCSVReader
 from chainsaw.data.util.traj_info_backends import SqliteDB
@@ -48,6 +47,12 @@ import pkg_resources
 import numpy as np
 
 xtcfiles, pdbfile = get_bpti_test_data()
+
+try:
+    import pyemma
+    have_feature_reader = True
+except ImportError:
+    have_feature_reader = False
 
 
 class TestTrajectoryInfoCache(unittest.TestCase):
@@ -112,8 +117,10 @@ class TestTrajectoryInfoCache(unittest.TestCase):
                 api.source(f.name)
                 assert f.name in cm.exception.message
 
+    @unittest.skipIf(not have_feature_reader, "dont have feature reader")
     def test_featurereader_xtc(self):
         # cause cache failures
+        from pyemma.coordinates.data import FeatureReader
         with settings(use_trajectory_lengths_cache=False):
             reader = FeatureReader(xtcfiles, pdbfile)
 

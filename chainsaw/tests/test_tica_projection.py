@@ -30,18 +30,14 @@ import os
 import tempfile
 import unittest
 
-from nose.plugins.attrib import attr
-import mdtraj
-
-from chainsaw.api import tica
-from chainsaw.data.feature_reader import FeatureReader
+from chainsaw.api import tica, source
 from chainsaw.util.contexts import numpy_random_seed
 from logging import getLogger
 from six.moves import range
 import numpy as np
 
 
-log = getLogger('chainsaw.'+'TestFeatureReaderAndTICAProjection')
+log = getLogger('chainsaw.'+'TestTICAProjection')
 
 
 def random_invertible(n, eps=0.01):
@@ -52,13 +48,10 @@ def random_invertible(n, eps=0.01):
     return u.dot(np.diag(s)).dot(v)
 
 
-@attr(slow=True)
-class TestFeatureReaderAndTICAProjection(unittest.TestCase):
+class TestTICAProjection(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         with numpy_random_seed(52):
-            c = super(TestFeatureReaderAndTICAProjection, cls).setUpClass()
-
             cls.dim = 99  # dimension (must be divisible by 3)
             N = 5000  # length of single trajectory # 500000 # 50000
             N_trajs = 10  # number of trajectories
@@ -66,12 +59,6 @@ class TestFeatureReaderAndTICAProjection(unittest.TestCase):
             A = random_invertible(cls.dim)  # mixing matrix
             # tica will approximate its inverse with the projection matrix
             mean = np.random.randn(cls.dim)
-
-            # create topology file
-            cls.temppdb = tempfile.mktemp('.pdb')
-            with open(cls.temppdb, 'w') as f:
-                for i in range(cls.dim // 3):
-                    print(('ATOM  %5d C    ACE A   1      28.490  31.600  33.379  0.00  1.00' % i), file=f)
 
             t = np.arange(0, N)
             cls.trajnames = []  # list of xtc file names
@@ -83,22 +70,17 @@ class TestFeatureReaderAndTICAProjection(unittest.TestCase):
                 data = correlated + mean
                 xyz = data.reshape((N, cls.dim // 3, 3))
                 # create trajectory file
-                traj = mdtraj.load(cls.temppdb)
-                traj.xyz = xyz
-                traj.time = t
                 tempfname = tempfile.mktemp('.xtc')
-                traj.save(tempfname)
+                np.save(tempfname, xyz)
                 cls.trajnames.append(tempfname)
 
     @classmethod
     def tearDownClass(cls):
         for fname in cls.trajnames:
             os.unlink(fname)
-        os.unlink(cls.temppdb)
-        super(TestFeatureReaderAndTICAProjection, cls).tearDownClass()
 
     def test_covariances_and_eigenvalues(self):
-        reader = FeatureReader(self.trajnames, self.temppdb)
+        reader = source(self.trajnames, chunk_size=10000)
         for tau in [1, 10, 100, 1000, 2000]:
             trans = tica(lag=tau, dim=self.dim, kinetic_map=False)
             trans.data_producer = reader

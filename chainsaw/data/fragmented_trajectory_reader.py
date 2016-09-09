@@ -160,16 +160,6 @@ class _FragmentedTrajectoryIterator(object):
     def next(self):
         return self.__next__()
 
-    def _allocate_chunk(self, expected_length, ndim):
-        from chainsaw.data.feature_reader import FeatureReader
-        if all(isinstance(r, FeatureReader) and r._return_traj_obj for r in self._readers):
-            X = preallocate_empty_trajectory(n_frames=expected_length,
-                                             top=self._readers[0].featurizer.topology)
-        else:
-            X = np.empty((expected_length, ndim), dtype=self._frag_reader.output_type())
-
-        return X
-
     def _read_full(self, skip):
         if self._ra_indices is not None:
             fragment_indices = self.__get_ra_index_indices()

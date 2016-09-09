@@ -35,7 +35,7 @@ from chainsaw.util.files import TemporaryDirectory
 
 
 def _test_ra_with_format(format, stride):
-    from chainsaw.tests.test_featurereader import create_traj
+    from chainsaw.tests.util import create_traj
 
     topfile = pkg_resources.resource_filename(__name__, 'data/test.pdb')
     trajfiles = []
