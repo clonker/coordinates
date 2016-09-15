@@ -77,11 +77,11 @@ class TestTICA_Basic(unittest.TestCase):
         assert Y.shape[0] == 100
         assert Y.shape[1] == 1, Y.shape[1]
 
+    @unittest.skipIf(not have_pyemma, "dont have pyemma")
     def test_MD_data(self):
         # this is too little data to get reasonable results. We just test to avoid exceptions
-        path = pkg_resources.resource_filename(__name__, 'data') + os.path.sep
-        self.pdb_file = os.path.join(path, 'bpti_ca.pdb')
-        self.xtc_file = os.path.join(path, 'bpti_mini.xtc')
+        from chainsaw.tests.util import get_pyemma_bpti_dataset
+        self.xtc_file,  self.pdb_file= get_pyemma_bpti_dataset()
         inp = source(self.xtc_file, top=self.pdb_file)
         # see if this doesn't raise
         ticamini = tica(inp, lag=1)
@@ -111,7 +111,6 @@ class TestTICA_Basic(unittest.TestCase):
         out1 = tica.get_output()
         out2 = tica.fit_transform([X, X])
         np.testing.assert_array_almost_equal(out1, out2)
-
 
     def test_singular_zeros(self):
         # make some data that has one column of all zeros
@@ -322,11 +321,7 @@ class TestTICAExtensive(unittest.TestCase):
     @unittest.skipIf(not have_pyemma, "dont have pyemma")
     def test_feature_correlation_MD(self):
         # Copying from the test_MD_data
-        #path = pkg_resources.resource_filename(__name__, 'data') + os.path.sep
-        from pyemma.datasets import get_bpti_test_data
-        data = get_bpti_test_data()
-        pdb_file = data['top']
-        xtc_file = data['trajs']
+        xtc_file, pdb_file = get_pyemma_bpti_dataset()
         inp = source(xtc_file, top=pdb_file)
         ticamini = tica(inp, lag=1, kinetic_map=False)
 

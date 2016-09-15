@@ -10,6 +10,13 @@ from ..data.cache import Cache
 import chainsaw
 
 
+try:
+    import pyemma
+    have_feature_reader = True
+except ImportError:
+    have_feature_reader = False
+
+
 class ProfilerCase(unittest.TestCase):
     def setUp(self):
         import cProfile
@@ -109,14 +116,16 @@ class TestCache(unittest.TestCase):
         t = chainsaw.tica(src)
         cache = Cache(t)
 
+    @unittest.skipIf(not have_feature_reader, "dont have feature_reader")
     def test_with_feature_reader_switch_cache_file(self):
-        import pkg_resources
-        path = pkg_resources.resource_filename(__name__, 'data') + os.path.sep
-        pdbfile = os.path.join(path, 'bpti_ca.pdb')
-        trajfiles = os.path.join(path, 'bpti_mini.xtc')
+        from pyemma.datasets import get_bpti_test_data
+        d = get_bpti_test_data()
 
-        reader = chainsaw.source(trajfiles, top=pdbfile)
-        reader.featurizer.add_selection([0,1, 2])
+        pdbfile = d['top']
+        trajfiles = d['trajs']
+
+        reader = chainsaw.source(trajfiles[:-1], top=pdbfile)
+        reader.featurizer.add_selection([0, 1, 2])
 
         cache = Cache(reader)
         name_of_cache = cache.current_cache_file_name
@@ -131,7 +140,7 @@ class TestCache(unittest.TestCase):
         self.assertEqual(cache.current_cache_file_name, name_of_cache)
 
         # add a new file and ensure we still got the same cache file
-        reader.filenames.append(os.path.join(path, 'bpti_001-033.xtc'))
+        reader.filenames.append(trajfiles[-1])
         self.assertEqual(cache.current_cache_file_name, name_of_cache)
 
 
