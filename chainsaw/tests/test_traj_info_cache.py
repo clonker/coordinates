@@ -58,10 +58,8 @@ class TestTrajectoryInfoCache(unittest.TestCase):
         config.use_trajectory_lengths_cache = True
 
         if have_feature_reader:
-            from pyemma.datasets import get_bpti_test_data
-            d = get_bpti_test_data()
-            cls.xtcfiles =d['trajs']
-            cls.pdbfile = d['top']
+            from chainsaw.tests.util import get_pyemma_bpti_dataset
+            cls.xtcfiles, cls.pdbfile = get_pyemma_bpti_dataset()
 
     def setUp(self):
         self.work_dir = tempfile.mkdtemp("traj_cache_test")

@@ -48,3 +48,13 @@ def _monkey_patch_testing_apply_setting():
         _old_init_doc_test_finder(self, *args, **kw)
 
     doctest.DocTestFinder.__init__ = _patched_init
+
+
+def get_pyemma_bpti_dataset():
+    """ returns (xtc_files, pdb) of BPTI test set of PyEMMA. """
+    from pyemma.datasets import get_bpti_test_data
+    data = get_bpti_test_data()
+    xtc_file = data['trajs']
+    pdb_file = data['top']
+
+    return xtc_file, pdb_file

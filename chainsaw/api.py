@@ -61,52 +61,6 @@ __all__ = ['load',  # IO
 #
 # ==============================================================================
 
-def featurizer(topfile):
-    r""" Featurizer to select features from MD data.
-
-    Parameters
-    ----------
-    topfile : str or mdtraj.Topology instance
-        path to topology file (e.g pdb file) or a mdtraj.Topology object
-
-    Returns
-    -------
-    feat : :class:`Featurizer <chainsaw.data.featurization.featurizer.MDFeaturizer>`
-
-    Examples
-    --------
-
-    Create a featurizer and add backbone torsion angles to active features.
-    Then use it in :func:`source`
-
-    >>> import chainsaw # doctest: +SKIP
-    >>> feat = chainsaw.featurizer('my_protein.pdb') # doctest: +SKIP
-    >>> feat.add_backbone_torsions() # doctest: +SKIP
-    >>> reader = chainsaw.source(["my_traj01.xtc", "my_traj02.xtc"], features=feat) # doctest: +SKIP
-
-    or
-
-    >>> traj = mdtraj.load('my_protein.pdb') # # doctest: +SKIP
-    >>> feat = chainsaw.featurizer(traj.topology) # doctest: +SKIP
-
-    .. autoclass:: chainsaw.data.featurization.featurizer.MDFeaturizer
-        :members:
-        :undoc-members:
-
-        .. rubric:: Methods
-
-        .. autoautosummary:: chainsaw.data.featurization.featurizer.MDFeaturizer
-           :methods:
-
-        .. rubric:: Attributes
-
-        .. autoautosummary:: chainsaw.data.featurization.featurizer.MDFeaturizer
-            :attributes:
-    """
-    from chainsaw.data.featurization.featurizer import MDFeaturizer
-    return MDFeaturizer(topfile)
-
-
 # TODO: DOC - which topology file formats does mdtraj support? Find out and complete docstring
 def load(trajfiles, features=None, top=None, stride=1, chunk_size=None, **kw):
     r""" Loads coordinate features into memory.
@@ -152,9 +106,9 @@ def load(trajfiles, features=None, top=None, stride=1, chunk_size=None, **kw):
            * tabulated ASCII (.dat, .txt)
            * binary python (.npy, .npz)
 
-    features : MDFeaturizer, optional, default = None
+    features : pyemma.coordinates.data.MDFeaturizer, optional, default = None
         a featurizer object specifying how molecular dynamics files should
-        be read (e.g. intramolecular distances, angles, dihedrals, etc).
+        be read (e.g. intra-molecular distances, angles, dihedrals, etc).
 
     top : str, optional, default = None
         A molecular topology file, e.g. in PDB (.pdb) format
